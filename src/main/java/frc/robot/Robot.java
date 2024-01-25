@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Robot;
+import frc.robot.commands.driveCommand;
 import frc.robot.components.QuailSwerveDrive;
 import frc.robot.components.QuailSwerveModule;
 
@@ -63,51 +64,21 @@ public class Robot extends TimedRobot
 	@Override
 	public void teleopInit(){
 		System.out.print("init");
-		robotInit();
+		driveCommand dt = new driveCommand(PRIMARY_CONTROLLER, GYRO, drivetrain);
+		CommandScheduler.getInstance().schedule(dt);
+
 	}
 	@Override
 	public void disabledExit()
 	{
-
+		drivetrain.softResetMotors();
 	}
 
 	@Override
 	public void teleopPeriodic()
 	{
-		double leftX = PRIMARY_CONTROLLER.getLeftX();
-		double leftY = - PRIMARY_CONTROLLER.getLeftY(); /// Y UP is negative
-		double rightY = -PRIMARY_CONTROLLER.getRightY();
-		double rightX = PRIMARY_CONTROLLER.getRightX();
 
-		double rightTrigger = PRIMARY_CONTROLLER.getRightTriggerAxis();
-		
-		Vec2d movementVector = new Vec2d(leftX, leftY);
 
-		double speedScale = 0.08 + (0.92 * rightTrigger);
-
-		if (Math.abs(rightX) < 0.1){
-			rightX = 0.0001;
-		}
-
-		if (movementVector.getLength() < 0.1) {
-			movementVector = new Vec2d(0,0);
-		}
-
-		if ((Math.abs(rightX) < 0.1) && (movementVector.getLength() < 0.05)){
-			drivetrain.stop();
-			if (PRIMARY_CONTROLLER.getAButton()) {
-				drivetrain.XLockModules();
-			}
-			drivetrain.brakeOn();
-		}
-		else {
-			rightX /= 35;
-			RobotMovement movement = new RobotMovement(rightX, movementVector.normalize().scale(speedScale));
-			drivetrain.move(movement, this.GYRO.getAngle() * Constants.DEG_TO_RAD);
-		}
-		if(PRIMARY_CONTROLLER.getYButton()){
-			GYRO.reset();
-		}
 
 	}
 
@@ -115,16 +86,20 @@ public class Robot extends TimedRobot
 	public void autonomousInit() {
 		ArrayList<Pose2d> points = new ArrayList<Pose2d>();
 
-		points.add(new Pose2d(0,12,0));
+		points.add(new Pose2d(0,12,Math.PI/4));
 		points.add(new Pose2d(0,-12,0));
 
 		Path curPath = new Path(points);
-		ConstraintsPair CP = new ConstraintsPair(10, 100);
-		MiniPID pidcontroller = new MiniPID(0,0,0);
-		this.pathFollower = new PathFollower(odometry, curPath, CP, CP, pidcontroller, 0.5, 0, 1, 5);
+		ConstraintsPair TranslationPair = new ConstraintsPair(10, 100);
+		ConstraintsPair RotationPair = new ConstraintsPair(0.05, 1);
+		MiniPID pidcontroller = new MiniPID(0.05,0,0);
+		
+		this.pathFollower = new PathFollower(odometry, curPath, TranslationPair, RotationPair, pidcontroller, 0.5, 0, 1, 5);
 
 		this.odometry.setPose(new Pose2d(0,0,0));
 		this.GYRO.reset();
+		this.drivetrain.resetMotors();
+		this.drivetrain.softResetMotors();
 		System.out.println("auton init");
 		
 	}
@@ -142,6 +117,7 @@ public class Robot extends TimedRobot
 		SmartDashboard.putNumber("heading", this.GYRO.getAngle());
 		SmartDashboard.putNumber("xpos", odometry.x);
 		SmartDashboard.putNumber("ypos", odometry.y);
+		SmartDashboard.putNumber("dtheta", deltaPos.rotation);
 
 		if (PRIMARY_CONTROLLER.getBButtonPressed()){
 			odometry.setPose(new Pose2d(0,0,0));
@@ -155,11 +131,15 @@ public class Robot extends TimedRobot
 	public void autonomousPeriodic() {
 		RobotMovement nextMovement = pathFollower.calculateNextDriveMovement();		
 		Vec2d newTranslation = (new Vec2d(nextMovement.translation.x/200, nextMovement.translation.y/200));
+		double rotation = nextMovement.rotation;
+		if (Math.abs(rotation) < 0.01) {
+			rotation = 0;
+		}
 
 		SmartDashboard.putNumber("autoX", nextMovement.translation.x);
 		SmartDashboard.putNumber("autoY", nextMovement.translation.y);
 
-		drivetrain.move(new RobotMovement(newTranslation), GYRO.getAngle());
+		drivetrain.move(new RobotMovement(rotation/20, newTranslation), GYRO.getAngle() * Constants.DEG_TO_RAD);
 		SmartDashboard.putNumber("x", newTranslation.x);
 		SmartDashboard.putNumber("y", newTranslation.y);
 

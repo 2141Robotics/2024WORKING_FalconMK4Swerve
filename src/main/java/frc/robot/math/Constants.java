@@ -31,4 +31,6 @@ public class Constants
 
 	public static final double steeringRatio = 12.8d;
 	public static final double driveRatio = 6.75d;
+
+	public static final double deadZonePercent = 0.05d;
 }

@@ -41,6 +41,9 @@ public class QuailSwerveDrive extends SwerveDrive<QuailSwerveModule>
 			module.init();
 		}
 	}
+	public void softResetMotors() {
+		this.modules.forEach(m -> m.init());
+	}
 
 	
 	/**
