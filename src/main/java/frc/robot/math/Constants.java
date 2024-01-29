@@ -33,4 +33,6 @@ public class Constants
 	public static final double driveRatio = 6.75d;
 
 	public static final double deadZonePercent = 0.05d;
+
+	public static final double METERS_TO_INCHES = 39.3701;
 }

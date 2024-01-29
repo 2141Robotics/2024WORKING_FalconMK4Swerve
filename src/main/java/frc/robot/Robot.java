@@ -10,11 +10,12 @@ import com.mineinjava.quail.pathing.ConstraintsPair;
 import com.mineinjava.quail.pathing.Path;
 import com.mineinjava.quail.pathing.PathFollower;
 import com.mineinjava.quail.util.MiniPID;
+import com.mineinjava.quail.util.Util;
 import com.mineinjava.quail.util.geometry.Pose2d;
 import com.mineinjava.quail.util.geometry.Vec2d;
 
 import frc.robot.math.Constants;
-
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -39,10 +40,13 @@ public class Robot extends TimedRobot
 
 	public PathFollower pathFollower;
 
+	public MiniPID pidcontroller;
+
 	AHRS GYRO = new AHRS();
 
 	/** Slot 0 controller. */
 	private static final XboxController PRIMARY_CONTROLLER = new XboxController(0);
+
 
 
 	@Override
@@ -63,7 +67,6 @@ public class Robot extends TimedRobot
 
 	@Override
 	public void teleopInit(){
-		System.out.print("init");
 		driveCommand dt = new driveCommand(PRIMARY_CONTROLLER, GYRO, drivetrain);
 		CommandScheduler.getInstance().schedule(dt);
 
@@ -79,28 +82,31 @@ public class Robot extends TimedRobot
 	{
 
 
-
 	}
 
 	@Override
 	public void autonomousInit() {
+
+
 		ArrayList<Pose2d> points = new ArrayList<Pose2d>();
 
-		points.add(new Pose2d(0,12,Math.PI/4));
-		points.add(new Pose2d(0,-12,0));
+		points.add(new Pose2d(0,0,0));
+		points.add(new Pose2d(0,12*4,Constants.PI_OVER_TWO));
+		points.add(new Pose2d(12, 12*4, Constants.PI_OVER_TWO));
+		points.add(new Pose2d(0,-12, 0));
 
 		Path curPath = new Path(points);
-		ConstraintsPair TranslationPair = new ConstraintsPair(10, 100);
-		ConstraintsPair RotationPair = new ConstraintsPair(0.05, 1);
-		MiniPID pidcontroller = new MiniPID(0.05,0,0);
+		ConstraintsPair TranslationPair = new ConstraintsPair(50, 30);
+		ConstraintsPair RotationPair = new ConstraintsPair(4, 10);
+		this.pidcontroller = new MiniPID(0.002,0.000,0, 2);
+		this.pidcontroller.setDeadband(0.001/12);
 		
-		this.pathFollower = new PathFollower(odometry, curPath, TranslationPair, RotationPair, pidcontroller, 0.5, 0, 1, 5);
+		this.pathFollower = new PathFollower(odometry, curPath, TranslationPair, RotationPair, pidcontroller, 3, 0, 1, 5);
 
 		this.odometry.setPose(new Pose2d(0,0,0));
 		this.GYRO.reset();
 		this.drivetrain.resetMotors();
 		this.drivetrain.softResetMotors();
-		System.out.println("auton init");
 		
 	}
 
@@ -112,16 +118,25 @@ public class Robot extends TimedRobot
 
 		odometry.updateDeltaPoseEstimate(deltaPos.translation.scale(0.02).rotate(-GYRO.getAngle(), true));
 		
-		odometry.setAngle(GYRO.getAngle() * Constants.DEG_TO_RAD);
+		odometry.setAngle(-GYRO.getAngle() * Constants.DEG_TO_RAD);
+
+
 
 		SmartDashboard.putNumber("heading", this.GYRO.getAngle());
 		SmartDashboard.putNumber("xpos", odometry.x);
 		SmartDashboard.putNumber("ypos", odometry.y);
-		SmartDashboard.putNumber("dtheta", deltaPos.rotation);
+
 
 		if (PRIMARY_CONTROLLER.getBButtonPressed()){
 			odometry.setPose(new Pose2d(0,0,0));
 		}
+		
+
+		double[] pos = NetworkTableInstance.getDefault().getTable("limelight").getEntry("botpose").getDoubleArray(new double[6]);
+		SmartDashboard.putNumberArray("Limelight Pos", pos);
+		SmartDashboard.putNumber("LX", pos[0] * Constants.METERS_TO_INCHES);
+		SmartDashboard.putNumber("LY", pos[1] * Constants.METERS_TO_INCHES);
+
 	}
 
 	
@@ -132,9 +147,10 @@ public class Robot extends TimedRobot
 		RobotMovement nextMovement = pathFollower.calculateNextDriveMovement();		
 		Vec2d newTranslation = (new Vec2d(nextMovement.translation.x/200, nextMovement.translation.y/200));
 		double rotation = nextMovement.rotation;
-		if (Math.abs(rotation) < 0.01) {
-			rotation = 0;
-		}
+
+
+		SmartDashboard.putNumber("deltaAngle", Constants.RAD_TO_DEG * Util.deltaAngle(GYRO.getAngle() * Constants.DEG_TO_RAD, 0));
+		SmartDashboard.putNumber("PID output", rotation);
 
 		SmartDashboard.putNumber("autoX", nextMovement.translation.x);
 		SmartDashboard.putNumber("autoY", nextMovement.translation.y);
@@ -143,7 +159,9 @@ public class Robot extends TimedRobot
 		SmartDashboard.putNumber("x", newTranslation.x);
 		SmartDashboard.putNumber("y", newTranslation.y);
 
-		System.out.println("auto");
+		if(this.pathFollower.isFinished()){
+			drivetrain.stop();
+		}
 	}
 
 	@Override

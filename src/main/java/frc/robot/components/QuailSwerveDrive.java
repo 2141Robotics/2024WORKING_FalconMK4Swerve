@@ -43,6 +43,7 @@ public class QuailSwerveDrive extends SwerveDrive<QuailSwerveModule>
 	}
 	public void softResetMotors() {
 		this.modules.forEach(m -> m.init());
+		this.brakeOn();
 	}
 
 	
@@ -53,6 +54,7 @@ public class QuailSwerveDrive extends SwerveDrive<QuailSwerveModule>
 	public void resetMotors()
 	{
 		this.modules.forEach(m -> m.reset());
+		this.brakeOn();
 
 	}
 

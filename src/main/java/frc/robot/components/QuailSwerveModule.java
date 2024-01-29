@@ -4,8 +4,6 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.AbsoluteSensorRangeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 
-import java.util.ArrayList;
-
 import com.ctre.phoenix6.configs.MagnetSensorConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -96,6 +94,7 @@ public class QuailSwerveModule extends SwerveModuleBase
 
 		// Reset the motor rotations.
 		this.reset();
+		
 	}
 
 	/**
