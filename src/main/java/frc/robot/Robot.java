@@ -78,6 +78,17 @@ public class Robot extends TimedRobot
 
 	@Override
 	public void teleopInit(){
+
+	}
+	@Override
+	public void disabledExit()
+	{
+		driveTrain.softResetMotors();
+	}
+
+	@Override
+	public void teleopPeriodic()
+	{
 		
 		double leftX = PRIMARY_CONTROLLER.getLeftX();
 		double leftY = - PRIMARY_CONTROLLER.getLeftY(); /// Y UP is negative
@@ -128,17 +139,6 @@ public class Robot extends TimedRobot
 			GYRO.reset();
 		}
 		System.out.println(PRIMARY_CONTROLLER.getLeftX());
-	}
-	@Override
-	public void disabledExit()
-	{
-		driveTrain.softResetMotors();
-	}
-
-	@Override
-	public void teleopPeriodic()
-	{
-
 
 	}
 
