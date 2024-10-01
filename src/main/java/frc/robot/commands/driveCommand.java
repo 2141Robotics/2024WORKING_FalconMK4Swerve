@@ -33,8 +33,11 @@ public class driveCommand extends Command{
     @Override
     public void initialize() {
         super.initialize();
-        driveTrain.softResetMotors();
-        driveTrain.stop();
+
+        driveTrain.resetMotors();
+        //driveTrain.softResetMotors();
+        
+        //driveTrain.stop();
         System.out.println("drive commmand start");
     }
 

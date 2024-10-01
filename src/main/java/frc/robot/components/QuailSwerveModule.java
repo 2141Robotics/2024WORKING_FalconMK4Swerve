@@ -15,6 +15,8 @@ import frc.robot.math.Constants;
 import com.mineinjava.quail.SwerveModuleBase;
 import com.mineinjava.quail.util.geometry.Vec2d;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
 /**
  * Container for one swerve module. Wraps two falcon500s: one for driving and one for steering.
  * 
@@ -106,17 +108,19 @@ public class QuailSwerveModule extends SwerveModuleBase
 		// Set the steering motor's internal rotation to 0.
 		double currentPos = this.canCoder.getAbsolutePosition().refresh().getValue();
 		// The angle to rotate to face forward.
-		double angleToRotate = currentPos > 0.5d ? currentPos - 1d : currentPos;
+		double angleToRotate = currentPos;
 		// Set the steering motor's rotation.
 		this.steeringMotor.setPosition(angleToRotate * 12.8);
 		this.currentAngle = angleToRotate * Constants.TWO_PI;
+		this.steeringMotor.setControl(new PositionDutyCycle(angleToRotate * 12.8));
 	}
 
 	public Vec2d getCurrentMovement() {
 		double angle = this.canCoder.getAbsolutePosition().refresh().getValue() * (2 * Math.PI);
 		double velocity = this.drivingMotor.getVelocity().refresh().getValue();
 		double rotationsPerSecond = velocity / 6.75;
-		double inchesPerSecond = rotationsPerSecond * 4 * Math.PI;
+		double inchesPerSecond = rotationsPerSecond * Constants.WHEEL_DIAMETER * Math.PI;
+		SmartDashboard.putNumber("Module" + this.canCoder.getDeviceID(), inchesPerSecond);
 
 		return new Vec2d(angle, inchesPerSecond, false);
 	

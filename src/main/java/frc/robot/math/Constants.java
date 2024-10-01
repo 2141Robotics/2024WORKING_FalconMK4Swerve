@@ -10,6 +10,12 @@ public class Constants
 	/** The delay in milliseconds before a report gets sent to DriverStation if an action fails. */
 	public static final int MS_DELAY = 30;
 
+	public static final double WHEEL_DIAMETER = 3.75;//Adjusted from real size 3.8 to correct for error
+
+	public static final double STEERING_RATIO = 12.8;
+
+	public static final double DRIVING_RATIO = 6.75;
+
 	/** Settings are {kF, kP, kI, kD} *///		kV  kP	 kI  kD
 	public static final double[] PID_SETTINGS =  { 0.0d, 0.5d, 0.0d, 0.00d };
 
